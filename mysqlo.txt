@@ -1,0 +1,294 @@
+MySQL 命令行 
+先到相应的bin下 C:Program FilesMySQLMySQL Server 5.5bin>mysqld.exe -install 然后    
+1、mysql服务的启动和停止 
+net stop mysql 
+net start mysql 
+
+2、登陆mysql 
+语法如下： mysql -u用户名 -p用户密码 
+键入命令mysql -uroot -p， 回车后提示你输入密码，输入12345，然后回车即可进入到mysql中了，mysql的提示符是： 
+mysql> 
+注意，如果是连接到另外的机器上，则需要加入一个参数-h机器IP 
+
+3、增加新用户 
+格式：grant 权限 on 数据库.* to 用户名@登录主机 identified by "密码" 
+如，增加一个用户user1密码为password1，让其可以在本机上登录， 并对所有数据库有查询、插入、修改、删除的权限。首先用以root用户连入mysql，然后键入以下命令： 
+grant select,insert,update,delete on *.* to user1@localhost Identified by "password1"; 
+如果希望该用户能够在任何机器上登陆mysql，则将localhost改为"%"。 
+如果你不想user1有密码，可以再打一个命令将密码去掉。 
+grant select,insert,update,delete on mydb.* to user1@localhost identified by ""; 
+
+4： 操作数据库 
+登录到mysql中，然后在mysql的提示符下运行下列命令，每个命令以分号结束。 
+1、 显示数据库列表。 
+show databases; 
+缺省有两个数据库：mysql和test。 mysql库存放着mysql的系统和用户权限信息，我们改密码和新增用户，实际上就是对这个库进行操作。 
+2、 显示库中的数据表： 
+use mysql; 
+show tables; 
+3、 显示数据表的结构： 
+describe 表名; 
+4、 建库与删库： 
+create database 库名; 
+drop database 库名; 
+5、 建表： 
+use 库名; 
+create table 表名(字段列表); 
+drop table 表名; 
+6、 清空表中记录： 
+delete from 表名; 
+7、 显示表中的记录： 
+select * from 表名; 
+
+5、导出和导入数据 
+1. 导出数据： 
+mysqldump --opt test > mysql.test 
+即将数据库test数据库导出到mysql.test文件，后者是一个文本文件 
+如：mysqldump -u root -p123456 --databases dbname > mysql.dbname 
+就是把数据库dbname导出到文件mysql.dbname中。 
+2. 导入数据: 
+mysqlimport -u root -p123456 < mysql.dbname。 
+不用解释了吧。 
+3. 将文本数据导入数据库: 
+文本数据的字段数据之间用tab键隔开。 
+use test; 
+load data local infile "文件名" into table 表名; 
+1:使用SHOW语句找出在服务器上当前存在什么数据库： 
+mysql> SHOW DATABASES; 
+2:2、创建一个数据库MYSQLDATA 
+mysql> CREATE DATABASE MYSQLDATA; 
+3:选择你所创建的数据库 
+mysql> USE MYSQLDATA; (按回车键出现Database changed 时说明操作成功！) 
+4:查看现在的数据库中存在什么表 
+mysql> SHOW TABLES; 
+5:创建一个数据库表 
+mysql> CREATE TABLE MYTABLE (name VARCHAR(20), sex CHAR(1)); 
+6:显示表的结构： 
+mysql> DESCRIBE MYTABLE; 
+7:往表中加入记录 
+mysql> insert into MYTABLE values ("hyq","M"); 
+8:用文本方式将数据装入数据库表中（例如D:/mysql.txt） 
+mysql> LOAD DATA LOCAL INFILE "D:/mysql.txt" INTO TABLE MYTABLE; 
+9:导入.sql文件命令（例如D:/mysql.sql） 
+mysql>use database; 
+mysql>source d:/mysql.sql; 
+10:删除表 
+mysql>drop TABLE MYTABLE; 
+11:清空表 
+mysql>delete from MYTABLE; 
+12:更新表中数据 
+mysql>update MYTABLE set sex="f" where name='hyq'; 13：备份数据库mysqldump -u root 库名>xxx.data14： 
+
+例2：连接到远程主机上的MYSQL 
+　　假设远程主机的IP为：110.110.110.110，用户名为root,密码为abcd123。则键入以下命令： 　　　 
+
+　　mysql -h110.110.110.110 -uroot -pabcd123 　　 
+
+　　（注:u与root可以不用加空格，其它也一样） 　　 
+
+　　3、退出MYSQL命令： exit 
+MYSQL常用命令
+ 
+
+mysql命令行常用命令 
+
+第一招、mysql服务的启动和停止
+net stop mysql
+net start mysql
+
+第二招、登陆mysql
+语法如下： mysql -u用户名 -p用户密码
+键入命令mysql -uroot -p， 回车后提示你输入密码，输入12345，然后回车即可进入到mysql中了，mysql的提示符是：
+mysql>
+注意，如果是连接到另外的机器上，则需要加入一个参数-h机器IP
+
+第三招、增加新用户
+格式：grant 权限 on 数据库.* to 用户名@登录主机 identified by "密码"
+如，增加一个用户user1密码为password1，让其可以在本机上登录， 并对所有数据库有查询、插入、修改、删除的权限。首先用以root用户连入mysql，然后键入以下命令：
+grant select,insert,update,delete on *.* to user1@localhost Identified by "password1";
+如果希望该用户能够在任何机器上登陆mysql，则将localhost改为"%"。
+如果你不想user1有密码，可以再打一个命令将密码去掉。
+grant select,insert,update,delete on mydb.* to user1@localhost identified by "";
+
+第四招： 操作数据库
+登录到mysql中，然后在mysql的提示符下运行下列命令，每个命令以分号结束。
+1、 显示数据库列表。
+show databases;
+缺省有两个数据库：mysql和test。 mysql库存放着mysql的系统和用户权限信息，我们改密码和新增用户，实际上就是对这个库进行操作。
+2、 显示库中的数据表：
+use mysql;
+show tables;
+3、 显示数据表的结构：
+describe 表名;
+4、 建库与删库：
+create database 库名;
+drop database 库名;
+5、 建表：
+use 库名;
+create table 表名(字段列表);
+drop table 表名;
+6、 清空表中记录：
+delete from 表名;
+7、 显示表中的记录：
+select * from 表名;
+
+第五招、导出和导入数据
+1. 导出数据：
+mysqldump --opt test > mysql.test
+即将数据库test数据库导出到mysql.test文件，后者是一个文本文件
+如：mysqldump -u root -p123456 --databases dbname > mysql.dbname
+就是把数据库dbname导出到文件mysql.dbname中。
+2. 导入数据:
+mysqlimport -u root -p123456 < mysql.dbname。
+mysql>use database_name 
+然后使用下面这个命令 
+mysql>source d:\datafilename.sql 
+当然你需要将文件所在的路径搞清楚,并且正确地使用了他 
+进入mysql 安装所在的目录的子目录bin. 输入执行导入sql的命令. 
+例如: 你的mysql 安装在 d:\mysql 
+步骤如下: 
+开始 -> 运行 -> 输入CMD 
+D: 
+cd mysql\bin 
+mysql -u root -p123456 test <d:\a.sql 
+其中 root 为你的mysql管理员用户名, 123456 为密码 test为数据库名称 d:\a.sql 为备份下来的数据文件所在位置. 
+如果是Windows的话,从命令提示符下到MYSQL文件目录中的Bin文件夹下,执行命令 
+mysql -u root -p databasename < db.sql 
+其中root是你MYSQL的用户名,databasename是你数据库的名称,而db.sql你是的文件.注意你必须把db.sql放到bin文件夹下才可以.当然文件的位置可以换. 
+如果是LINUX的话,直接输入 
+
+mysql databasename < db.sql
+不用解释了吧。
+3. 将文本数据导入数据库:
+文本数据的字段数据之间用tab键隔开。
+use test;
+load data local infile "文件名" into table 表名;
+
+
+select * into outfile 'd:/test.xls' from  表名
+
+
+　通过MySQL命令行，可以修改MySQL数据库的密码，下面就为您详细介绍该MySQL命令行，如果您感兴趣的话，不妨一看。
+
+　　格式：mysqladmin -u用户名 -p旧密码 password 新密码
+
+　　1、给root加个密码ab12。首先在DOS下进入目录mysql\bin，然后键入以下命令
+
+　　mysqladmin -u root -password ab12
+
+　　注：因为开始时root没有密码，所以-p旧密码一项就可以省略了。
+
+　　2、再将root的密码改为djg345。
+
+　　mysqladmin -u root -p ab12 password djg345
+
+　　(注意：和上面不同，下面的因为是MYSQL环境中的命令，所以后面都带一个分号作为命令结束符)
+
+　　3、命令行修改root密码：
+
+　　mysql> UPDATE mysql.user SET password=PASSWORD(’新密码’) WHERE User=’root’;
+
+　　mysql> FLUSH PRIVILEGES;
+
+　　4、显示当前的user：
+
+　　mysql> SELECT USER();
+
+
+
+
+
+mysql -uroot -ppassword
+显示所有数据库
+show databases;
+创建数据库
+create database name charset utf8;
+use name;
+数据库不可以改名字
+表可以修改
+创建表
+create table name
+(
+id int,/*默认是有符号的 可以加上 unsigned*/
+name varchar(20)
+) engine myisam charset utf8;
+
+alter table tablename add clumnname tinyint unsigned not null default 0
+M 表示补0宽度，和zerofill
+alter table tablename add snum smallint(M) zerofill not null default 0
+显示所有的表
+show tables;
+从命名表名
+rename oldname to newname;
+
+清空表 ：truncate 表名(删除表再从建一张相同结构的表，操作后得到一张全新表)
+         delete 删除所有的行层面开始比较慢
+
+#乱码 告诉服务器，客户端使用的gbk编码
+set names gbk;
+set names utf8(.php)
+把管理界面写的sql及结果都输出到一个sql文件中
+tee D:\151007.sql
+#\c调处执行 (exit;) 
+显示整个表结构 desc tablename
+添加数据： insert into tablename (id,name) values(1,'jjj')
+插入所有列 insert into tablename  可省略前面部分values(1,'afa','fsfs')
+插入多行  insert into tablename  可省略前面部分values(1,'afa','fsfs')，(2,'afa','fsfs') 
+更新数据： update tablename set columnname=value where condition
+删除整行
+delete from tablename where condition
+Float（M,D）decimal(M,D) M-代表总位数，不包括小数点D-代表小数点之后的位数（注意：float 有损精度，尽量少用，可以用decimal）
+varchar(M)不定长会在前边增加1-2字节存储字符串的长度65535
+char定长如果不够m个长度会在内部用空格补齐。去处世再把右侧空格删掉255char(1):男女
+注：这意味着，如果右侧本身有空格，将会丢失
+M代表的是字符（一个汉字算一个字符）一个字母算一个字符
+text不能加默认值加了也没用
+blob是二进制类型，用来存储图像音频等信息 （存储01），防范字符的问题导致信息丢失
+date YYYY-MM-DD 1000-01-01到9999-12-31（0000-00-00允许特殊存在）
+time 00:00:00
+datetime YYYY-mm-dd HH:ii::ss
+(tm timestamp default CURRENT_TIMESTAMP)自动插入当前时间
+year YYYY 占一个字节（1901---2155 和0000（错误情况下））
+year(2)='95
+一个表列类型都是定长可以提高查询速度；char(20)是会造成空间浪费但会，提高查询速度
+varchar(20)不定长查询会浪费时间
+如果某个表中的某一列补丁长，再改动频率不大的情况下，可以把他单独放在一张表里
+在开发中，会员的信息优化往往是把频繁用到的信息，优先考虑效率，存储到一张表中，
+不常用到的信息和比较占据空间的信息优先考虑空间占用，存储到辅表中
+时间优化：用 int unsigned
+create table member(
+id  int unsigned auto_increment primary key,
+username char(20) not null default '',
+gender char(1) not null default'',
+weight tinyint unsigned not null default 0,
+birth date not null default'0000-00-00',
+salary decimal(8,2) not null default 0.00,
+lastlogin int unsigned not null default 0(时间戳)
+
+)engine myisam charset utf8;
+修改表语法：
+Alter table 表名 add 列名 int unsigned not null  default '';
+
+想在特殊的位置加上某一列：
+after 某列
+如果想新建一列并且在最前面用 first在尾部
+删除列：
+Ater table 表名 drop 列名；
+修改列类型：
+Alter table 表名 modify 列名 新类型 新参数
+alter table   test modify gender char(4)  not null;
+修改列名及列类型：
+Alter table 表名 change 旧列名 新列名 新类型 新参数
+alter table test change id uid int unsigned;
+修改列类型 如果类型改小则会导致数据丢失，在strict_mode 下无法修改
+
+查看表的建表语句
+
+show create table tablename;
+导入数据库：
+insert into databasename.tablename select columnname from databasename.tablename
+
+select count(*) from 表名 ，查询全部数据行数=select count(1或0) 表名 INNODB 一行行数，效率比较低
+select count(id) from tablename ,查询，id不等于NULL的行数
+
+严格讲 group by a,b,c  select 的列，只能在a,b,c里选择予以上才没有矛盾

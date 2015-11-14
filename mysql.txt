@@ -1,0 +1,177 @@
+#sql及索引优化
+#使用MySQL  慢查询日志对有问题的sql进行监控
+show variables like 'slow_query_log' #查询相关变量语句
+ show variables like '%log%'
+show variables like 'long_query_time';
+show variables like 'slow%';
+set global slow_query_log_file='/home/mysql/sql_log/mysql-slow.log'
+set global log_queries_not_using_indexes=on;
+set global long_query_time=1;
+ set global slow_query_log=on;#开启慢查询日志；
+//(指定日志文件存放位置，可以为空，系统会给一个缺省的文件host_name-slow.log)
+log-slow-queries=/var/lib/mysql/slowquery.log
+//(记录超过的时间，默认为10s)
+long_query_time=2
+//(log下来没有使用索引的query,可以根据情况决定是否开启)
+log-queries-not-using-indexes 
+//(如果设置了，所有没有使用索引的查询也将被记录)
+log-long-format
+#慢查询日志的分析工具
+mysqldumpslow -h #查看命令帮助
+mysqldumpslow -s c -t 20 host-slow.log
+mysqldumpslow -s r -t 20 host-slow.log
+//上述命令可以看出访问次数最多的20个sql语句和返回记录集最多的20个sql。
+mysqldumpslow -t 10 -s t -g "left join" host-slow.log
+//这个是按照时间返回前10条里面含有左连接的sql语句。
+
+#pt-query-digest 工具
+pt-query-digest -h查看使用帮助
+#输出到文件
+pt-query-digest slow-log >slow_log.report
+pt-query-digest 日志路径
+如何通过慢查询日志发现有问题的sql?
+1.查询次数多且每次查询占用时间长的sql
+通常为pt-query-digest分析的前几个查询
+2.IO大的sql
+注意pt-query-digest分析中的Rows examine项
+3.未命中索引的sql
+注意pt-query-digest 分析中Rows examine 和Rows Send的对比，前者大的sql
+
+
+使用explain 查询SQL的执行计划
+mysql> explain sql语句
+table 显示这一行数据是关于那张表
+type ;显示连接使用里何种类型，从最好到最差的连接类型为const、eq_reg、ref、range、index和ALL（表扫描）
+possible_keys;显示可能应用在这张表中的索引。如果为空，没有可能的索引
+key :实际使用的索引。如果为null ,则没有使用索引；
+key_len: 使用的索引长度，在不损失精确性的情况下，长度越短越好
+ref:显示索引在哪一列被使用了，如果可能的话，是一个常数
+rows:mysql 认为必须检查的用来返回请求数据的行数
+extra; Using filesort ;看到这个的时候，查询就需要优化了，mysql 需要进行额外的步骤来发现如何对返回的行排序。他根据连接类型以及存储排序键值和匹配条件的全部行的行指针来排序全部行
+ using temporary 看到这个的时候，查询就需要优化了。这里mysql 需要创建一个临时表来存储结果，这通常发生在对不同的列集进行order by 上，而不是group by 上
+
+
+对max语句优化建立索引：
+create index idx_paydate on table(pay_date);
+explain select max(pay_date) from table ;
+
+2006年和2007年电影的发行量分别是以下两种错误形式：
+select count(release_year=2006 or release_year=2007) from film;#无法分开计算；
+select count(*) from film where release_year=2006 or release_year=2007 #查的一共的
+正确：
+
+select count(release_year=2006 or null) as 2006  count(release_year=2007 or null) as 2007 from 2007
+
+子查询的优化
+通常情况下需要把子查询优化为join 查询，但在优化时需注意关联建是否有一对多的关系，要注意重复数据（使用distinct去除）
+优化group by 查询
+
+explain select a.first_name,a.last_name,count(*) from b inner join a using(actor_id) group by b.actor_id
+
+优化后的：
+explain select  a.first_name,a.last_name,c.cnt from a inner join(
+select a.id  count(*) as cnt from b group by actor_id) as c using(actor_id);
+增加过滤条件尽量在子查询中
+
+
+优化limit 查询
+select film_id ,description from film order by title limit 50 ,5;
+优化步骤1：使用有索引的列或主键进行 order by
+select film_id, description from film order by film_id limit 50,5;
+优化步骤2：记录上一次返回的主键，在下次查询时使用主键过滤(缺点，主键需顺序增长（可以增加index_id保证id连续，并建立索引）)优化思想减小io
+select film_id,description from film where film_id>55 and film_id<=60 order by film_id limit 1,5;
+如何选择合适的列建立索引？
+1.在where从句，group by 从句，order by 从句，on 从句中出现的列(特殊情况select中)
+2.索引字段越小越好
+3.离散度大的列放到联合索引的前面
+select * from payment where staff_id =2 and customer_id=584;
+联合索引 是index(staff_id,customer_id)好？还是index(customer_id,staff_id)好？
+由于customer_id的离散程度更大，所以应该使用index(customer_id,staff_id);
+判断列离散程度
+select count(distinct customer_id),count(distinct staff_id) from table;
+值越大，离散程度越大
+
+索引的维护及优化--重复及冗余索引
+索引不是越多越好，过多的索引不仅使insert update altet 等缓慢，还会使查询变慢
+重复索引是指相同的列以相同的顺序建立的同类型的索引，如下表中Primary key 和id 列上的索引就是重复索引
+create table test(
+id int not null primary key, 主键已经是唯一索引了   
+name vcarchar(10) not null,
+title varchar(50) not null,     
+unique(id)  唯一索引   
+)engine=innodb;  
+
+
+冗余索引 ：多个索引的前缀列是相同的或者在联合索引中包含主键的索引
+create table test(
+id int not null primary key, 主键已经是唯一索引了   
+name vcarchar(10) not null,
+title varchar(50) not null,     
+key(name,id) 包含了主键
+)engine=innodb;   innodb中每个索引自动默认已经包含了主键
+
+查找重复及冗余索引工具
+pt-duplicate-key-checker工具检查重复及冗余索引
+如下：
+pt-duplicate-key-checker \
+-uroot \
+-padmin \
+-h 127.0.0.1
+
+
+删除不用索引
+目前mysql中还没有记录索引使用情况，但是在PerconMySQL和MariaDB 中可以通过INDEX_STATISTICS 表来查看那些索引未使用，但在MySQL中目前只能通过慢查询日志配合 pt-index-usage 工具来进行索引使用情况分析
+
+pt-index-usage \
+-uroot -p ''\
+mysql-slow.log
+
+数据库结构的优化
+   选择合适的数据类型
+1.使用可以存下你的数据类型的最小的数据类型
+2.使用简单的数据类型，INT 要比 varchar 类型在mysql 处理上简单
+3.尽可能的使用not null 定义字段，并且给个默认值
+4.尽量少用text类型，非用不可时最好考虑分表 
+
+使用int来存储日期时间，利用FROM_UNIXTIME(),UNIX_TIMESTAMP()两个函数来进行转换
+
+使用bigint（8字节）来存储ip地址，利用 INET_ATON(),INET_NTOA()两个函数来进行转换
+
+范式化（到第三范式 传递依赖 各个列只依赖于主键，不能依赖其他再依赖主键）
+优点解决了插入，更新，删除等异常
+反范式化
+为了提高查询效率，把稍微违反下范式化，是一种以空间换取时间的操作
+
+表的垂直拆分
+ 把原来一个有很多列的表拆分成多个表，这解决了表的宽度问题。通常垂直拆分可以按以下原则进行
+1.把不常用的字段单独存放在一个表中。
+2.把大字段独立存放到一个表中。
+3.把经常一起使用的字段放到一起。
+
+表的水平拆分
+为了解决单表的数据量过大的问题，水平拆分的表的每一个表的结构都是完全一致的
+解决查询，插入效率低的问题
+常用的水平拆分方法为：
+1.对customer_id 进行hash运算，如果要拆分成5个表则使用mod(customer_id,5) 取出0-4个值
+2.针对不同的hashID把数据存到不同的表中
+挑战：
+1.跨分区表进行数据查询（一般前台查询量比较大时候）
+2.统计以及后台报表操作要整成一个汇总表（使用情况较少）
+前后台业务分开前台使用拆分开的表，后台使用汇总表，避免业务互相影响
+
+系统优化
+操作系统的配制(linux)
+网络方面的配置，要修改/etc/sysctl.conf文件
+#增加tcp支持的队列数
+net.ipv4.tcp_max_syn_backlog=65535
+#减少断开连接时，资源回收
+net.ipv4.tcp_max_tw_buckets=8000
+net.ipv4.tcp_tw_reuse=1
+net.ipv4.tcp_tw_recycle=1
+net.ipv4.tcp_fin_timeout=10
+打开文件数的限制，可以使用ulimit -a 查看目录的各位限制，可以修改/etc/security/limits.conf文件，增加以下内容以修改打开文件数量的限制
+*soft nofile 65535
+*hard nofile 65535
+ 除此之外最好在mysql服务器上关闭iptables.selinux 等防火墙软件
+mysql 数据库配置
+https://tools.percona.com/wizard
