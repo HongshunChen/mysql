@@ -292,3 +292,4 @@ select count(*) from 表名 ，查询全部数据行数=select count(1或0) 表�
 select count(id) from tablename ,查询，id不等于NULL的行数
 
 严格讲 group by a,b,c  select 的列，只能在a,b,c里选择予以上才没有矛盾
+order by 要在where /group by /having 后   最后limit
